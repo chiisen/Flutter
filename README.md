@@ -125,6 +125,12 @@ flutter build apk
 
 # 編譯 Web
 flutter build web
+
+# 執行測試
+flutter test
+
+# 執行特定測試檔案
+flutter test test/widget_test.dart
 ```
 
 ---
