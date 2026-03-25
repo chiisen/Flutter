@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/todo_provider.dart';
 import '../models/todo.dart';
-import '../i18n.dart';
+import '../widgets/todo_tile.dart';
+import '../widgets/todo_form_dialog.dart';
+import '../widgets/empty_state.dart';
 
 /// 待辦事項列表頁面
-/// 繼承自 StatefulWidget，表示這是一個有狀態的 Widget
 class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
 
@@ -11,215 +14,443 @@ class TodoListPage extends StatefulWidget {
   State<TodoListPage> createState() => _TodoListPageState();
 }
 
-/// TodoListPage 的狀態類別
-/// 管理頁面的所有動態內容和使用者互動
 class _TodoListPageState extends State<TodoListPage> {
-  // 儲存所有待辦事項的列表
-  final List<Todo> _todos = [];
+  final _searchController = TextEditingController();
 
-  // 文字輸入控制器，用於管理輸入框的內容
-  final TextEditingController _controller = TextEditingController();
-
-  /// 新增待辦事項
-  /// 當使用者輸入內容並按下新增按鈕時呼叫此方法
-  void _addTodo() {
-    // 如果輸入為空則不新增
-    if (_controller.text.trim().isEmpty) return;
-
-    setState(() {
-      _todos.add(Todo(
-        // 使用時間戳作為唯一 ID
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _controller.text.trim(),
-      ));
-      // 清空輸入框
-      _controller.clear();
-    });
-  }
-
-  /// 切換待辦事項的完成狀態
-  /// [id] 要切換狀態的事項 ID
-  void _toggleTodo(String id) {
-    setState(() {
-      // 找到對應 ID 的事項並切換其完成狀態
-      final todo = _todos.firstWhere((t) => t.id == id);
-      todo.isCompleted = !todo.isCompleted;
-    });
-  }
-
-  /// 刪除待辦事項
-  /// [id] 要刪除的事項 ID
-  void _deleteTodo(String id) {
-    setState(() {
-      // 從列表中移除對應 ID 的事項
-      _todos.removeWhere((t) => t.id == id);
-    });
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 獲取國際化實例，用於取得當前語言的翻譯文字
-    final l10n = AppLocalizations.of(context);
+    return Consumer<TodoProvider>(
+      builder: (context, todoProvider, child) {
+        if (todoProvider.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Scaffold(
-      // 應用程式列
-      appBar: AppBar(
-        // 使用翻譯作為標題
-        title: Text(l10n.appTitle),
-        // 使用主題色系的反轉主色作為背景色
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          // 清除已完成按鈕
-          IconButton(
-            icon: const Icon(Icons.delete_sweep),
-            // 使用翻譯作為提示文字
-            tooltip: l10n.clearCompleted,
-            onPressed: () {
-              setState(() {
-                // 移除所有已完成的事項
-                _todos.removeWhere((t) => t.isCompleted);
-              });
-            },
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('待辦事項'),
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            actions: [
+              // 搜尋按鈕
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () => _showSearchBar(context),
+                tooltip: '搜尋',
+              ),
+              // 篩選選單
+              _buildFilterMenu(context, todoProvider),
+              // 清除已完成
+              if (todoProvider.stats['completed']! > 0)
+                IconButton(
+                  icon: const Icon(Icons.delete_sweep),
+                  onPressed: () => _confirmClearCompleted(context, todoProvider),
+                  tooltip: '清除已完成',
+                ),
+            ],
           ),
-        ],
+          body: Column(
+            children: [
+              // 統計資訊卡片
+              _buildStatsCard(context, todoProvider),
+              const Divider(height: 1),
+              // 列表區域
+              Expanded(
+                child: todoProvider.todos.isEmpty
+                    ? _buildEmptyState(todoProvider)
+                    : _buildTodoList(context, todoProvider),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _showAddTodoDialog(context, todoProvider),
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 建立統計資訊卡片
+  Widget _buildStatsCard(BuildContext context, TodoProvider provider) {
+    final stats = provider.stats;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey.shade800 : Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
       ),
-      // 頁面主體
-      body: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // ===== 輸入區域 =====
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                // 文字輸入框
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      // 使用翻譯作為提示文字
-                      hintText: l10n.addHint,
-                      border: OutlineInputBorder(),  // 邊框樣式
-                      prefixIcon: const Icon(Icons.add_circle_outline),  // 前綴圖示
-                    ),
-                    // 按下 Enter 鍵時新增事項
-                    onSubmitted: (_) => _addTodo(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // 新增按鈕
-                FloatingActionButton(
-                  onPressed: _addTodo,
-                  child: const Icon(Icons.add),
-                ),
-              ],
-            ),
+          _buildStatItem(
+            context,
+            icon: Icons.task,
+            label: '總計',
+            value: stats['total']!,
+            color: Colors.blue,
           ),
-          // ===== 統計資訊 =====
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // 顯示總事項數（使用翻譯）
-                Text(
-                  l10n.totalCount(_todos.length),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                // 顯示已完成事項數（使用翻譯）
-                Text(
-                  l10n.completedCount(_todos.where((t) => t.isCompleted).length),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.green,
-                  ),
-                ),
-              ],
-            ),
+          _buildStatItem(
+            context,
+            icon: Icons.pending_actions,
+            label: '進行中',
+            value: stats['active']!,
+            color: Colors.orange,
           ),
-          const Divider(),  // 分隔線
-          // ===== 列表區域 =====
-          Expanded(
-            child: _todos.isEmpty
-                // 空狀態顯示
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.task_alt,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          // 使用翻譯作為空狀態文字
-                          l10n.noTodos,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                // 事項列表
-                : ListView.builder(
-                    itemCount: _todos.length,
-                    itemBuilder: (context, index) {
-                      final todo = _todos[index];
-                      // 可滑動刪除的列表項目
-                      return Dismissible(
-                        key: Key(todo.id),  // 用於識別列表項目的唯一鍵
-                        direction: DismissDirection.endToStart,  // 從右向左滑動刪除
-                        // 滑動時顯示的背景
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 16),
-                          child: const Icon(
-                            Icons.delete,
-                            color: Colors.white,
-                          ),
-                        ),
-                        // 滑動刪除後的回呼
-                        onDismissed: (_) => _deleteTodo(todo.id),
-                        child: ListTile(
-                          // 前導複選框
-                          leading: Checkbox(
-                            value: todo.isCompleted,
-                            onChanged: (_) => _toggleTodo(todo.id),
-                          ),
-                          // 事項標題
-                          title: Text(
-                            todo.title,
-                            style: TextStyle(
-                              // 已完成時顯示刪除線
-                              decoration: todo.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              // 已完成時文字變灰色
-                              color: todo.isCompleted ? Colors.grey : null,
-                            ),
-                          ),
-                          // 尾隨刪除按鈕
-                          trailing: IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => _deleteTodo(todo.id),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+          _buildStatItem(
+            context,
+            icon: Icons.check_circle,
+            label: '已完成',
+            value: stats['completed']!,
+            color: Colors.green,
+          ),
+          _buildStatItem(
+            context,
+            icon: Icons.warning,
+            label: '已過期',
+            value: stats['overdue']!,
+            color: Colors.red,
           ),
         ],
       ),
     );
   }
 
-  /// 釋放資源
-  /// 當 Widget 被銷毀時呼叫，用於清理控制器避免記憶體洩漏
+  Widget _buildStatItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required int value,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(height: 4),
+        Text(
+          value.toString(),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 建立空狀態
+  Widget _buildEmptyState(TodoProvider provider) {
+    IconData icon;
+    String title;
+    String? subtitle;
+
+    switch (provider.filterOption) {
+      case FilterOption.active:
+        icon = Icons.check_circle_outline;
+        title = '沒有進行中的事項';
+        subtitle = '所有事項都已完成！';
+        break;
+      case FilterOption.completed:
+        icon = Icons.inventory_2_outlined;
+        title = '沒有已完成的事項';
+        subtitle = '繼續努力完成待辦事項吧！';
+        break;
+      case FilterOption.overdue:
+        icon = Icons.event_available;
+        title = '沒有已過期的事項';
+        subtitle = '太棒了！所有事項都按時完成';
+        break;
+      case FilterOption.all:
+        icon = Icons.task_alt;
+        title = '還沒有待辦事項';
+        subtitle = '點擊右下角按鈕新增第一項待辦';
+        break;
+    }
+
+    return EmptyState(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      action: provider.filterOption == FilterOption.all
+          ? FilledButton.icon(
+              onPressed: () => _showAddTodoDialog(context, provider),
+              icon: const Icon(Icons.add),
+              label: const Text('新增待辦'),
+            )
+          : null,
+    );
+  }
+
+  /// 建立待辦列表
+  Widget _buildTodoList(BuildContext context, TodoProvider provider) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        // 重新整理邏輯（可選）
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.only(top: 8, bottom: 80),
+        itemCount: provider.todos.length,
+        itemBuilder: (context, index) {
+          final todo = provider.todos[index];
+          return TodoTile(
+            todo: todo,
+            onToggle: () => provider.toggleTodo(todo.id),
+            onDelete: () {
+              provider.deleteTodo(todo.id);
+              _showUndoSnackbar(context, provider);
+            },
+            onEdit: () => _showEditTodoDialog(context, todo, provider),
+          );
+        },
+      ),
+    );
+  }
+
+  /// 顯示搜尋欄
+  void _showSearchBar(BuildContext context) {
+    showSearch(
+      context: context,
+      delegate: TodoSearchDelegate(context),
+    );
+  }
+
+  /// 建立篩選選單
+  Widget _buildFilterMenu(BuildContext context, TodoProvider provider) {
+    return PopupMenuButton<FilterOption>(
+      icon: const Icon(Icons.filter_list),
+      tooltip: '篩選',
+      onSelected: (option) => provider.setFilterOption(option),
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: FilterOption.all,
+          child: Row(
+            children: [
+              Icon(Icons.all_inclusive),
+              SizedBox(width: 8),
+              Text('全部'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: FilterOption.active,
+          child: Row(
+            children: [
+              Icon(Icons.pending_actions),
+              SizedBox(width: 8),
+              Text('進行中'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: FilterOption.completed,
+          child: Row(
+            children: [
+              Icon(Icons.check_circle),
+              SizedBox(width: 8),
+              Text('已完成'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: FilterOption.overdue,
+          child: Row(
+            children: [
+              Icon(Icons.warning),
+              SizedBox(width: 8),
+              Text('已過期'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 顯示新增對話框
+  Future<void> _showAddTodoDialog(BuildContext context, TodoProvider provider) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => const TodoFormDialog(),
+    );
+
+    if (result != null && mounted) {
+      await provider.addTodo(
+        title: result['title'] as String,
+        description: result['description'] as String?,
+        priority: result['priority'] as int,
+        dueDate: result['dueDate'] as DateTime?,
+        category: result['category'] as String?,
+      );
+    }
+  }
+
+  /// 顯示編輯對話框
+  Future<void> _showEditTodoDialog(
+    BuildContext context,
+    Todo todo,
+    TodoProvider provider,
+  ) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => TodoFormDialog(todo: todo),
+    );
+
+    if (result != null && mounted) {
+      final updatedTodo = todo.copyWith(
+        title: result['title'] as String,
+        description: result['description'] as String?,
+        priority: result['priority'] as int,
+        dueDate: result['dueDate'] as DateTime?,
+        category: result['category'] as String?,
+      );
+      await provider.updateTodo(updatedTodo);
+    }
+  }
+
+  /// 確認清除已完成
+  Future<void> _confirmClearCompleted(
+    BuildContext context,
+    TodoProvider provider,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('確認清除'),
+        content: Text('確定要清除所有 ${provider.stats['completed']} 個已完成的事項嗎？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('清除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      provider.clearCompleted();
+      _showUndoSnackbar(context, provider);
+    }
+  }
+
+  /// 顯示撤銷 Snackbar
+  void _showUndoSnackbar(BuildContext context, TodoProvider provider) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('已刪除'),
+        action: SnackBarAction(
+          label: '撤銷',
+          onPressed: () => provider.undoDelete(),
+        ),
+        duration: const Duration(seconds: 3),
+        onVisible: () {
+          // 當 Snackbar 消失時清除撤銷堆疊
+          Future.delayed(const Duration(seconds: 3), () {
+            if (mounted) provider.clearUndoStack();
+          });
+        },
+      ),
+    );
+  }
+}
+
+/// 搜尋委託
+class TodoSearchDelegate extends SearchDelegate {
+  final BuildContext parentContext;
+
+  TodoSearchDelegate(this.parentContext);
+
   @override
-  void dispose() {
-    _controller.dispose();  // 釋放文字控制器
-    super.dispose();
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return Consumer<TodoProvider>(
+      builder: (context, provider, child) {
+        provider.setSearchQuery(query);
+        return ListView.builder(
+          itemCount: provider.todos.length,
+          itemBuilder: (context, index) {
+            final todo = provider.todos[index];
+            return TodoTile(
+              todo: todo,
+              onToggle: () => provider.toggleTodo(todo.id),
+              onDelete: () => provider.deleteTodo(todo.id),
+              onEdit: () {
+                close(context, null);
+                _showEditTodoDialog(context, todo, provider);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return buildResults(context);
+  }
+
+  void _showEditTodoDialog(
+    BuildContext context,
+    Todo todo,
+    TodoProvider provider,
+  ) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => TodoFormDialog(todo: todo),
+    );
+
+    if (result != null && context.mounted) {
+      final updatedTodo = todo.copyWith(
+        title: result['title'] as String,
+        description: result['description'] as String?,
+        priority: result['priority'] as int,
+        dueDate: result['dueDate'] as DateTime?,
+        category: result['category'] as String?,
+      );
+      await provider.updateTodo(updatedTodo);
+    }
   }
 }

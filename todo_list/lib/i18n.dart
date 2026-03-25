@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
 /// 應用程式語言設定
 /// 定義支援的語言選項
