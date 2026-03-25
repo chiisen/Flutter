@@ -3,6 +3,7 @@
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.flutter-plugins
 .pub-cache/
 .pub/
 /build/
@@ -31,6 +32,14 @@ app.*.map.json
 # OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # Logs
 *.log
+
+# Environment variables
+.env
+.env.local
+
+# Generated icon files (flutter_launcher_icons)
+**/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json

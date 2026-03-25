@@ -88,6 +88,17 @@ flutter doctor
 - ✅ 一鍵清除已完成
 - ✅ 統計顯示
 
+**專案結構：**
+```
+todo_list/lib/
+├── main.dart              # 應用程式入口 (TodoApp)
+├── i18n.dart              # 國際化
+├── models/
+│   └── todo.dart          # 資料模型 (Todo)
+└── pages/
+    └── todo_list_page.dart # UI 頁面 (TodoListPage)
+```
+
 **快速開始：**
 ```bash
 cd todo_list
