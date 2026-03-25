@@ -19,6 +19,9 @@ void main() {
     // 將 TodoApp widget 載入測試環境並觸發一幀渲染
     await tester.pumpWidget(const TodoApp());
 
+    // 等待幀渲染完成
+    await tester.pumpAndSettle();
+
     // ===== 驗證初始狀態 =====
     // 檢查初始時顯示「尚無待辦事項」
     expect(find.text('尚無待辦事項'), findsOneWidget);
@@ -36,7 +39,7 @@ void main() {
     // 點擊新增按鈕
     await tester.tap(find.byIcon(Icons.add));
     // 觸發一幀渲染，讓 UI 更新
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     // ===== 驗證更新後狀態 =====
     // 檢查「尚無待辦事項」已消失
@@ -52,7 +55,7 @@ void main() {
     // ===== 測試完成功能 =====
     // 點擊複選框標記為完成
     await tester.tap(find.byType(Checkbox));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     // 驗證已完成統計更新
     expect(find.text('已完成 1 項'), findsOneWidget);

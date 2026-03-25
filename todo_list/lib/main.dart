@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'i18n.dart';
 
 /// 應用程式入口函式
 void main() {
@@ -23,6 +25,18 @@ class TodoApp extends StatelessWidget {
       ),
       // 設定首頁為待辦事項列表頁面
       home: const TodoListPage(),
+      // 設定國際化支援
+      localizationsDelegates: [
+        const AppLocalizationsDelegate(AppLocale.zhTW), // 使用自訂的翻譯代理
+        ...GlobalMaterialLocalizations.delegates,       // Flutter Material 國際化（包含 Cupertino）
+      ],
+      // 設定支援的語言環境
+      supportedLocales: const [
+        Locale('zh', 'TW'), // 繁體中文
+        Locale('en', 'US'), // 英文
+      ],
+      // 設定區域設定（強制使用繁體中文）
+      locale: const Locale('zh', 'TW'),
     );
   }
 }
@@ -55,7 +69,7 @@ class TodoListPage extends StatefulWidget {
 class _TodoListPageState extends State<TodoListPage> {
   // 儲存所有待辦事項的列表
   final List<Todo> _todos = [];
-  
+
   // 文字輸入控制器，用於管理輸入框的內容
   final TextEditingController _controller = TextEditingController();
 
@@ -97,17 +111,22 @@ class _TodoListPageState extends State<TodoListPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 獲取國際化實例，用於取得當前語言的翻譯文字
+    final l10n = AppLocalizations.of(context);
+    
     return Scaffold(
       // 應用程式列
       appBar: AppBar(
-        title: const Text('To Do List'),
+        // 使用翻譯作為標題
+        title: Text(l10n.appTitle),
         // 使用主題色系的反轉主色作為背景色
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           // 清除已完成按鈕
           IconButton(
             icon: const Icon(Icons.delete_sweep),
-            tooltip: '清除已完成',
+            // 使用翻譯作為提示文字
+            tooltip: l10n.clearCompleted,
             onPressed: () {
               setState(() {
                 // 移除所有已完成的事項
@@ -129,10 +148,11 @@ class _TodoListPageState extends State<TodoListPage> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: '新增待辦事項...',
+                    decoration: InputDecoration(
+                      // 使用翻譯作為提示文字
+                      hintText: l10n.addHint,
                       border: OutlineInputBorder(),  // 邊框樣式
-                      prefixIcon: Icon(Icons.add_circle_outline),  // 前綴圖示
+                      prefixIcon: const Icon(Icons.add_circle_outline),  // 前綴圖示
                     ),
                     // 按下 Enter 鍵時新增事項
                     onSubmitted: (_) => _addTodo(),
@@ -153,14 +173,14 @@ class _TodoListPageState extends State<TodoListPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 顯示總事項數
+                // 顯示總事項數（使用翻譯）
                 Text(
-                  '共 ${_todos.length} 項',
+                  l10n.totalCount(_todos.length),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                // 顯示已完成事項數
+                // 顯示已完成事項數（使用翻譯）
                 Text(
-                  '已完成 ${_todos.where((t) => t.isCompleted).length} 項',
+                  l10n.completedCount(_todos.where((t) => t.isCompleted).length),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.green,
                   ),
@@ -184,7 +204,8 @@ class _TodoListPageState extends State<TodoListPage> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          '尚無待辦事項',
+                          // 使用翻譯作為空狀態文字
+                          l10n.noTodos,
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.grey[600],

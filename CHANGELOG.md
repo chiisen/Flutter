@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 新增 `README.md` 包含安裝指南與專案說明。
 - 建立 `todo_list` 範例專案。
 - 在 `README.md` 新增「疑難排解」章節。
+- **todo_list**: 新增 i18n 國際化支援（繁體中文、英文）。
+- **todo_list**: 新增 `i18n.dart` 翻譯類別，提供多語言文字轉換。
+
+### Changed
+- **todo_list**: 將 `main.dart` 中的硬編碼文字改為使用 i18n 翻譯。
 
 ### Fixed
 - 修復 Flutter SDK 路徑問題 (scoop shims)。
