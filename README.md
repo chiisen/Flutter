@@ -1,6 +1,8 @@
 # Flutter
 Flutter 學習筆記
 
+![TODO](./images/TODO.png)
+
 ## 安裝 Flutter (Windows)
 
 ### 使用 Scoop 安裝（推薦）
@@ -109,7 +111,7 @@ todo_list/build/app/outputs/flutter-apk/
 - **Dart:** 3.11.3
 - **支援平台：** Android, iOS, Web, Windows, macOS, Linux
 
-## 常用命令
+# 常用命令
 
 ```bash
 # 檢查環境
@@ -124,3 +126,19 @@ flutter build apk
 # 編譯 Web
 flutter build web
 ```
+
+---
+
+## 疑難排解 (Troubleshooting)
+
+### Windows: `flutter` 找不到指令
+如果您透過 Scoop 安裝了 Flutter 但終端機顯示 `flutter: The term 'flutter' is not recognized`：
+
+1. **重新建立路徑連結 (推薦)**
+   ```powershell
+   scoop reset flutter
+   ```
+2. **手動加入環境變數**
+   確保 `C:\Users\<您的用戶名>\scoop\apps\flutter\current\bin` 已加入系統或使用者 `PATH`。
+3. **重新啟動終端機**
+   更新環境變數後，必須重啟 PowerShell 視窗才會生效。
