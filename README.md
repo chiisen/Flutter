@@ -201,3 +201,16 @@ flutter test test/widget_test.dart
    確保 `C:\Users\<您的用戶名>\scoop\apps\flutter\current\bin` 已加入系統或使用者 `PATH`。
 3. **重新啟動終端機**
    更新環境變數後，必須重啟 PowerShell 視窗才會生效。
+
+### `flutter upgrade` 錯誤：`local changes that would be erased`
+如果您在執行 `flutter upgrade` 時看到以下錯誤：
+> `Your flutter checkout has local changes that would be erased by upgrading.`
+
+這通常是因為 Flutter SDK 目錄中的檔案被修改或是不經意間產生了變動。
+
+**解決方案：**
+直接使用 `--force` 參數強制覆寫本地變更並完成升級：
+```powershell
+flutter upgrade --force
+```
+
