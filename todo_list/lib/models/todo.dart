@@ -1,7 +1,3 @@
-import 'package:hive/hive.dart';
-
-part 'todo.g.dart';
-
 /// 優先級列舉
 enum Priority {
   low,    // 低
@@ -10,33 +6,15 @@ enum Priority {
 }
 
 /// 待辦事項資料模型
-@HiveType(typeId: 0)
-class Todo extends HiveObject {
-  @HiveField(0)
+class Todo {
   String id;          // 唯一識別碼
-
-  @HiveField(1)
   String title;       // 事項標題
-
-  @HiveField(2)
   bool isCompleted;   // 是否已完成
-
-  @HiveField(3)
   String? description;  // 詳細描述（可選）
-
-  @HiveField(4)
   int priority;       // 優先級 (0: low, 1: medium, 2: high)
-
-  @HiveField(5)
   DateTime? dueDate;  // 截止日期（可選）
-
-  @HiveField(6)
   String? category;   // 分類（可選）
-
-  @HiveField(7)
   DateTime createdAt; // 建立時間
-
-  @HiveField(8)
   DateTime? completedAt; // 完成時間
 
   Todo({
@@ -93,36 +71,38 @@ class Todo extends HiveObject {
     );
   }
 
-  /// 轉換為 JSON
+  /// 轉換為 JSON（對應 Supabase 欄位：snake_case）
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'title': title,
-      'isCompleted': isCompleted,
+      'is_completed': isCompleted,
       'description': description,
       'priority': priority,
-      'dueDate': dueDate?.toIso8601String(),
+      'due_date': dueDate?.toIso8601String(),
       'category': category,
-      'createdAt': createdAt.toIso8601String(),
-      'completedAt': completedAt?.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
+      'completed_at': completedAt?.toIso8601String(),
     };
   }
 
-  /// 從 JSON 建立
+  /// 從 JSON 建立（對應 Supabase 欄位：snake_case）
   factory Todo.fromJson(Map<String, dynamic> json) {
     return Todo(
       id: json['id'] as String,
       title: json['title'] as String,
-      isCompleted: json['isCompleted'] as bool,
+      isCompleted: json['is_completed'] as bool? ?? false,
       description: json['description'] as String?,
-      priority: json['priority'] as int,
-      dueDate: json['dueDate'] != null 
-          ? DateTime.parse(json['dueDate'] as String) 
+      priority: json['priority'] as int? ?? 1,
+      dueDate: json['due_date'] != null
+          ? DateTime.parse(json['due_date'] as String)
           : null,
       category: json['category'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      completedAt: json['completedAt'] != null 
-          ? DateTime.parse(json['completedAt'] as String) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'] as String)
           : null,
     );
   }

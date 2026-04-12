@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/todo_provider.dart';
+import '../config/supabase_config.dart';
 import '../models/todo.dart';
 import '../widgets/todo_tile.dart';
 import '../widgets/todo_form_dialog.dart';
@@ -8,7 +9,9 @@ import '../widgets/empty_state.dart';
 
 /// 待辦事項列表頁面
 class TodoListPage extends StatefulWidget {
-  const TodoListPage({super.key});
+  final VoidCallback? onOpenSettings;
+
+  const TodoListPage({super.key, this.onOpenSettings});
 
   @override
   State<TodoListPage> createState() => _TodoListPageState();
@@ -38,6 +41,49 @@ class _TodoListPageState extends State<TodoListPage> {
             title: const Text('待辦事項'),
             backgroundColor: Theme.of(context).colorScheme.inversePrimary,
             actions: [
+              // 連線狀態 + 設定按鈕
+              FutureBuilder<bool>(
+                future: SupabaseConfig.hasAnonKey(),
+                builder: (context, snapshot) {
+                  final isConnected = snapshot.data ?? false;
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.settings),
+                        onPressed: widget.onOpenSettings,
+                        tooltip: 'Supabase 設定',
+                      ),
+                      if (isConnected)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.5),
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              // 重新整理
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => todoProvider.reload(),
+                tooltip: '重新整理',
+              ),
               // 搜尋按鈕
               IconButton(
                 icon: const Icon(Icons.search),

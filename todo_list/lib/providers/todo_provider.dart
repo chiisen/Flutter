@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import '../models/todo.dart';
-import '../services/todo_service.dart';
+import '../services/supabase_todo_service.dart';
 
 /// 待辦事項提供者
-/// 使用 Provider 模式進行狀態管理
+/// 使用 Provider 模式進行狀態管理（Supabase 雲端版本）
 class TodoProvider extends ChangeNotifier {
-  final TodoService _todoService = TodoService();
-  
+  final SupabaseTodoService _todoService = SupabaseTodoService();
+
   List<Todo> _todos = [];
   List<Todo> _filteredTodos = [];
   bool _isLoading = false;
@@ -14,7 +14,7 @@ class TodoProvider extends ChangeNotifier {
   SortOption _sortOption = SortOption.createdAt;
   bool _ascending = false;
   FilterOption _filterOption = FilterOption.all;
-  
+
   // 最後刪除的項目（用於撤銷）
   List<Todo> _lastDeletedTodos = [];
 
@@ -42,17 +42,27 @@ class TodoProvider extends ChangeNotifier {
   /// 最後刪除的項目
   List<Todo> get lastDeletedTodos => _lastDeletedTodos;
 
-  /// 統計資訊
-  Map<String, int> get stats => _todoService.getStats();
+  /// 統計資訊（同步，使用記憶體資料）
+  Map<String, int> get stats {
+    final completed = _todos.where((t) => t.isCompleted).length;
+    final active = _todos.where((t) => !t.isCompleted).length;
+    final overdue = _todos.where((t) => t.isOverdue).length;
+
+    return {
+      'total': _todos.length,
+      'completed': completed,
+      'active': active,
+      'overdue': overdue,
+    };
+  }
 
   /// 初始化
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
-      await _todoService.init();
-      _todos = _todoService.getAllTodos();
+      _todos = await _todoService.getAllTodos();
       _applyFiltersAndSort();
     } catch (e) {
       debugPrint('初始化失敗：$e');
@@ -60,6 +70,11 @@ class TodoProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// 重新載入（從雲端同步）
+  Future<void> reload() async {
+    await init();
   }
 
   /// 新增待辦事項
@@ -260,9 +275,17 @@ class TodoProvider extends ChangeNotifier {
   /// 釋放資源
   @override
   void dispose() {
-    _todoService.close();
     super.dispose();
   }
+}
+
+/// 排序選項
+enum SortOption {
+  createdAt,   // 依建立時間
+  dueDate,     // 依截止日期
+  priority,    // 依優先級
+  title,       // 依標題
+  completed,   // 依完成狀態
 }
 
 /// 篩選選項
