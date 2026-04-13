@@ -304,10 +304,38 @@ class _SettingsDialogState extends State<SettingsDialog> {
               const SizedBox(height: 24),
 
               // 按鈕區
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('取消'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _saveConfig,
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.save),
+                        label: Text(_isLoading ? '儲存中...' : '儲存設定'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   if (_hasExistingConfig) ...[
+                    const SizedBox(height: 16),
                     TextButton.icon(
                       onPressed: _isLoading ? null : _clearConfig,
                       icon: const Icon(Icons.delete_outline),
@@ -316,30 +344,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         foregroundColor: Colors.red,
                       ),
                     ),
-                    const SizedBox(width: 8),
                   ],
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('取消'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _saveConfig,
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save),
-                    label: Text(_isLoading ? '儲存中...' : '儲存設定'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ],
