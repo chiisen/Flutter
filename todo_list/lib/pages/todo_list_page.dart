@@ -73,7 +73,7 @@ class _TodoListPageState extends State<TodoListPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.green.withOpacity(0.5),
+                                  color: Colors.green.withValues(alpha: 0.5),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 ),
@@ -201,7 +201,7 @@ class _TodoListPageState extends State<TodoListPage> {
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ],

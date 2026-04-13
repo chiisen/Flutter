@@ -173,7 +173,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         helperStyle: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                           fontSize: 10,
                         ),
                       ),

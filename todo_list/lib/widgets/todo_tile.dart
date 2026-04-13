@@ -69,7 +69,7 @@ class TodoTile extends StatelessWidget {
             style: TextStyle(
               decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
               color: todo.isCompleted 
-                  ? theme.colorScheme.onSurface.withOpacity(0.5)
+                  ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
                   : null,
             ),
           ),
@@ -82,7 +82,7 @@ class TodoTile extends StatelessWidget {
                 Text(
                   todo.description!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -125,7 +125,7 @@ class TodoTile extends StatelessWidget {
                               ? Colors.red 
                               : todo.isDueSoon 
                                   ? Colors.orange 
-                                  : theme.iconTheme.color?.withOpacity(0.7),
+                                  : theme.iconTheme.color?.withValues(alpha: 0.7),
                         ),
                         const SizedBox(width: 2),
                         Text(
@@ -135,7 +135,7 @@ class TodoTile extends StatelessWidget {
                                 ? Colors.red 
                                 : todo.isDueSoon 
                                     ? Colors.orange 
-                                    : theme.colorScheme.onSurface.withOpacity(0.7),
+                                    : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                         ),
