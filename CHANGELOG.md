@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-04-13
+
+### Fixed
+- **todo_list**: 修復 `main.dart` 中缺失 `supabase_flutter` 引用導致編譯失敗的問題。
+
 ## [1.1.1] - 2026-04-13
 
 ### Added
