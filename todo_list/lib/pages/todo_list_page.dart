@@ -399,7 +399,7 @@ class _TodoListPageState extends State<TodoListPage> {
       ),
     );
 
-    if (confirmed == true && mounted) {
+    if (confirmed == true && context.mounted) {
       provider.clearCompleted();
       _showUndoSnackbar(context, provider);
     }
