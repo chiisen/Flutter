@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **todo_list**: 將 `main.dart` 中的硬編碼文字改為使用 i18n 翻譯。
+- **todo_list**: 移除 `SettingsDialog` 中多餘的 API 金鑰取得說明文字。
 
 ### Fixed
 - 修復 Flutter SDK 路徑問題 (scoop shims)。
