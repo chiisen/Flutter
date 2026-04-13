@@ -48,7 +48,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
     try {
       await SupabaseConfig.saveConfig(
-        url: _urlController.text.trim(),
+        url: SupabaseConfig.defaultUrl,
         anonKey: _keyController.text.trim(),
       );
 
@@ -137,7 +137,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const Text(
-                          '只需輸入 Anon Key，URL 已使用預設值',
+                          'URL 已固定，請填入 Anon Key',
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
@@ -156,13 +156,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
               SingleChildScrollView(
                 child: Column(
                   children: [
-                    // URL 輸入（唯讀，顯示預設值）
+                    // URL 輸入（唯讀固定值）
                     TextFormField(
                       controller: _urlController,
                       readOnly: true,
                       decoration: InputDecoration(
                         labelText: 'Supabase URL',
-                        helperText: '已使用預設值',
+                        helperText: '已固定使用專案 URL',
                         prefixIcon: Icon(Icons.link, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
