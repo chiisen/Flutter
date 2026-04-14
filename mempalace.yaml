@@ -1,0 +1,20 @@
+wing: flutter
+rooms:
+- name: images
+  description: Files from images/
+  keywords:
+  - images
+  - images
+- name: todo_list
+  description: Files from todo_list/
+  keywords:
+  - todo_list
+  - todo_list
+- name: testing
+  description: Files from test/
+  keywords:
+  - testing
+  - test
+- name: general
+  description: Files that don't fit other rooms
+  keywords: []
