@@ -25,6 +25,14 @@ class TodoProvider extends ChangeNotifier {
   /// 錯誤訊息
   String? get error => _error;
 
+  /// 清除錯誤訊息
+  void clearError() {
+    if (_error != null) {
+      _error = null;
+      notifyListeners();
+    }
+  }
+
   /// 獲取所有待辦事項
   List<Todo> get todos => _filteredTodos;
   

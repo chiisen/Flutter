@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/todo_provider.dart';
 import '../config/supabase_config.dart';
@@ -32,8 +33,10 @@ class _TodoListPageState extends State<TodoListPage> {
       builder: (context, todoProvider, child) {
         // 顯示錯誤 pop up
         if (todoProvider.error != null) {
+          final errorMsg = todoProvider.error!;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showErrorSnackBar(context, todoProvider.error!);
+            _showErrorSnackBar(context, errorMsg);
+            todoProvider.clearError(); // 顯示後清除，避免重複觸發
           });
         }
 
@@ -510,32 +513,95 @@ class TodoSearchDelegate extends SearchDelegate {
 
 /// 顯示錯誤訊息 SnackBar
 void _showErrorSnackBar(BuildContext context, String error) {
+  // 分析錯誤類型
+  String title = '連線錯誤';
+  IconData icon = Icons.error_outline;
+  Color iconColor = Colors.white;
+
+  if (error.toLowerCase().contains('socketexception') || 
+      error.toLowerCase().contains('connection') ||
+      error.toLowerCase().contains('host lookup')) {
+    title = '網路連線異常';
+    icon = Icons.wifi_off_rounded;
+  } else if (error.contains('401') || error.contains('unauthorized') || error.contains('JWT')) {
+    title = '身分驗證過期';
+    icon = Icons.lock_person_rounded;
+  } else if (error.contains('user_id 非法')) {
+    title = '系統設定錯誤';
+    icon = Icons.settings_suggest_rounded;
+  } else if (error.toLowerCase().contains('postgrest') || error.contains('database')) {
+    title = '資料存取失敗';
+    icon = Icons.storage_rounded;
+  } else if (error.toLowerCase().contains('timeout')) {
+    title = '連線逾時';
+    icon = Icons.timer_off_rounded;
+  }
+
   ScaffoldMessenger.of(context).clearSnackBars();
+  
+  final double screenHeight = MediaQuery.of(context).size.height;
+  final double topPadding = MediaQuery.of(context).padding.top;
+
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Text('連線錯誤', style: TextStyle(fontWeight: FontWeight.bold)),
+              Icon(icon, color: iconColor, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: IconButton(
+                  icon: const Icon(Icons.copy_all_rounded, color: Colors.white, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: '複製錯誤訊息',
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: error));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('已複製錯誤訊息至剪貼簿'),
+                          duration: Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
-            error.length > 100 ? '${error.substring(0, 100)}...' : error,
-            style: const TextStyle(fontSize: 12),
+            error.length > 150 ? '${error.substring(0, 150)}...' : error,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.9),
+              height: 1.4,
+            ),
           ),
         ],
       ),
       backgroundColor: Theme.of(context).colorScheme.error,
       behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 5),
+      dismissDirection: DismissDirection.up,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20), // 高度變兩倍
+      margin: EdgeInsets.only(
+        bottom: screenHeight - topPadding - 180, // 推至頂部
+        left: 16,
+        right: 16,
+      ),
+      duration: const Duration(seconds: 6),
       action: SnackBarAction(
-        label: '重新整理',
+        label: '重試',
         textColor: Colors.white,
         onPressed: () {
           context.read<TodoProvider>().reload();
